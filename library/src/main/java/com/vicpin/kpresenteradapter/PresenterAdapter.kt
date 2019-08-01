@@ -456,7 +456,7 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
         if (this.loadMoreEnabled) {
             this.loadMoreEnabled = false
             this.loadMoreInvoked = false
-            notifyItemRemoved(itemCount)
+            notifyDataSetChanged()
         }
     }
 
@@ -464,7 +464,7 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
 
     override fun getItemId(position: Int): Long {
         if (isLoadMorePosition(position)) {
-            return Companion.LOAD_MORE_TYPE.toLong()
+            return LOAD_MORE_TYPE.toLong()
         } else if (hasStableIds()) {
             return if (position < getHeadersCount()) headers[position].hashCode().toLong() else getItem(position).hashCode().toLong()
         } else {
