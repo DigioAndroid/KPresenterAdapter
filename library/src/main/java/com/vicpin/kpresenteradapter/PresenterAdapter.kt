@@ -160,7 +160,13 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
 
     private fun appendListeners(viewHolder: ViewHolder<T>) {
         if (itemClickListener != null) {
-            viewHolder.itemView.setOnClickListener { itemClickListener?.invoke(getItem(viewHolder.adapterPosition), viewHolder) }
+            viewHolder.itemView.setOnClickListener {
+                itemClickListener?.invoke(getItem(viewHolder.adapterPosition), viewHolder)
+                viewHolder.itemView.isEnabled = false
+                Handler().postDelayed({
+                    viewHolder.itemView.isEnabled = true
+                }, 200)
+            }
         }
 
         if (itemLongClickListener != null) {
