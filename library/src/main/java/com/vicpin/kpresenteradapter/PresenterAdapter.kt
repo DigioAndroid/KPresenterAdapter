@@ -23,7 +23,9 @@ import kotlin.reflect.KClass
 /**
  * Created by Victor on 01/11/2016.
  */
-abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(DiffUtilCallback<T>()) {
+abstract class PresenterAdapter<T : Any>() :
+    MyListAdapter<T, ViewHolder<T>>(DiffUtilCallback<T>()) {
+
 
     /**
      * Data collections
@@ -45,6 +47,9 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
     }
 
     var scrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE
+    private var numberOfPendingItemsToLoadMore: Int = 1
+    private var hideLoadMore: Boolean = false
+    private var loadMoreLayout:Int = R.layout.adapter_load_more
 
     /**
      * Sets a custom listener instance. You can call to the listener from your ViewHolder classes with getCustomListener() method.
@@ -70,17 +75,22 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder<T> {
-        if (viewType == LOAD_MORE_TYPE) {
-            return LoadMoreViewHolder.getInstance(parent.context)
+        return if (viewType == LOAD_MORE_TYPE) {
+            if (hideLoadMore){
+                LoadMoreViewHolder.getInstance(parent.context, R.layout.adapter_load_more_empty)
+            } else {
+                LoadMoreViewHolder.getInstance(parent.context, loadMoreLayout)
+            }
+
         } else {
             var viewInfo = getViewInfoForType(viewType)
-            return getViewHolder(parent, viewInfo)
+            getViewHolder(parent, viewInfo)
         }
     }
 
     private fun getViewInfoForType(viewType: Int) =
-            if (isHeaderType(viewType)) headers[viewType - HEADER_TYPE]
-            else registeredViewInfo[viewType]
+        if (isHeaderType(viewType)) headers[viewType - HEADER_TYPE]
+        else registeredViewInfo[viewType]
 
     private fun isHeaderType(viewType: Int) = viewType >= HEADER_TYPE && viewType < HEADER_MAX_TYPE
 
@@ -120,22 +130,42 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
 
     private fun isLoadMorePosition(position: Int) = loadMoreEnabled && itemCount - 1 == position
 
+    private fun shouldPaginate(position: Int): Boolean {
+        if (numberOfPendingItemsToLoadMore >= itemCount) {
+            numberOfPendingItemsToLoadMore = 1
+        }
+        return loadMoreEnabled && itemCount - numberOfPendingItemsToLoadMore == position
+    }
+
     private fun isHeaderPosition(position: Int) = position < headers.size
 
-    private fun isNormalPosition(position: Int) = !isLoadMorePosition(position) && !isHeaderPosition(position)
+    private fun isNormalPosition(position: Int) =
+        !isLoadMorePosition(position) && !isHeaderPosition(position)
 
     override fun onBindViewHolder(holder: ViewHolder<T>, position: Int) {
         when {
             isNormalPosition(position) -> {
-                holder.onBind(data, getPositionWithoutHeaders(position), this@PresenterAdapter.scrollState, deleteListener = {
-                    removeItem(getPositionWithoutHeaders(holder.adapterPosition))
-                }, refreshViewsListener = {
-                    mRecyclerView?.get()?.refreshVisibleViews()
-                })
+                holder.onBind(
+                    data,
+                    getPositionWithoutHeaders(position),
+                    this@PresenterAdapter.scrollState,
+                    deleteListener = {
+                        removeItem(getPositionWithoutHeaders(holder.adapterPosition))
+                    },
+                    refreshViewsListener = {
+                        mRecyclerView?.get()?.refreshVisibleViews()
+                    })
                 appendListeners(holder)
+                if (numberOfPendingItemsToLoadMore > 1 && shouldPaginate(position)) {
+                    notifyLoadMoreReached()
+                }
             }
             isHeaderPosition(position) -> holder.onBindHeader(data)
-            isLoadMorePosition(position) -> notifyLoadMoreReached()
+            isLoadMorePosition(position) -> {
+                if (numberOfPendingItemsToLoadMore == 1) {
+                    notifyLoadMoreReached()
+                }
+            }
         }
     }
 
@@ -170,7 +200,13 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
         }
 
         if (itemLongClickListener != null) {
-            viewHolder.itemView.setOnLongClickListener { itemLongClickListener?.invoke(getItem(viewHolder.adapterPosition), viewHolder); true }
+            viewHolder.itemView.setOnLongClickListener {
+                itemLongClickListener?.invoke(
+                    getItem(
+                        viewHolder.adapterPosition
+                    ), viewHolder
+                ); true
+            }
         }
     }
 
@@ -261,7 +297,10 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
                 (appBar as AppBarLayout).addOnOffsetChangedListener(AppBarLayout.OnOffsetChangedListener { appBar, offset ->
                     if (lastOffset == -1 || Math.abs(offset - lastOffset) > 100) {
                         lastOffset = offset
-                        notifyScrollStateToCurrentViews(recycler, AbsListView.OnScrollListener.SCROLL_STATE_IDLE)
+                        notifyScrollStateToCurrentViews(
+                            recycler,
+                            AbsListView.OnScrollListener.SCROLL_STATE_IDLE
+                        )
                     }
                 })
             }
@@ -287,7 +326,10 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
 
                     if (lastOffset == -1 || Math.abs(totalScrolled - lastOffset) > 100) {
                         lastOffset = totalScrolled
-                        notifyScrollStateToCurrentViews(recycler, AbsListView.OnScrollListener.SCROLL_STATE_IDLE)
+                        notifyScrollStateToCurrentViews(
+                            recycler,
+                            AbsListView.OnScrollListener.SCROLL_STATE_IDLE
+                        )
                     }
                 }
             }
@@ -332,7 +374,8 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
         }
     }
 
-    private fun isScrollStopped(state: Int) = state == AbsListView.OnScrollListener.SCROLL_STATE_IDLE
+    private fun isScrollStopped(state: Int) =
+        state == AbsListView.OnScrollListener.SCROLL_STATE_IDLE
 
     /**
      * Add data at the end of the current data list and notifies the change
@@ -448,7 +491,11 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
      * Enable load more option for paginated collections
      * @param loadMoreListener
      */
-    fun enableLoadMore(loadMoreListener: (() -> Unit)?) {
+    @JvmOverloads
+    fun enableLoadMore(numberOfPendingItems: Int = 1, hideLoadMore:Boolean = false, loadMoreLayout:Int = R.layout.adapter_load_more, loadMoreListener: (() -> Unit)?) {
+        this.numberOfPendingItemsToLoadMore = numberOfPendingItems
+        this.hideLoadMore = hideLoadMore
+        this.loadMoreLayout = loadMoreLayout
         this.loadMoreEnabled = true
         this.loadMoreInvoked = false
         this.loadMoreListener = loadMoreListener
@@ -472,7 +519,8 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
         if (isLoadMorePosition(position)) {
             return LOAD_MORE_TYPE.toLong()
         } else if (hasStableIds()) {
-            return if (position < getHeadersCount()) headers[position].hashCode().toLong() else getItem(position).hashCode().toLong()
+            return if (position < getHeadersCount()) headers[position].hashCode()
+                .toLong() else getItem(position).hashCode().toLong()
         } else {
             return super.getItemId(position)
         }
@@ -496,8 +544,6 @@ abstract class PresenterAdapter<T : Any>() : MyListAdapter<T, ViewHolder<T>>(Dif
         mRecyclerView?.clear()
         mRecyclerView = null
     }
-
-
 }
 
 class DiffUtilCallback<T : Any> : DiffUtil.ItemCallback<T>() {
