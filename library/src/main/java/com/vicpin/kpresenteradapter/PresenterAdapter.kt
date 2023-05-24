@@ -131,7 +131,7 @@ abstract class PresenterAdapter<T : Any>() :
     private fun isLoadMorePosition(position: Int) = loadMoreEnabled && itemCount - 1 == position
 
     private fun shouldPaginate(position: Int): Boolean {
-        //Log.d("PresenterAdapter", "shouldPaginate -> pos:$position loadMoreConfig:$numberOfPendingItemsToLoadMore itemCount:$itemCount")
+        Log.d("PresenterAdapter", "shouldPaginate -> pos:$position loadMoreConfig:$numberOfPendingItemsToLoadMore itemCount:$itemCount")
         if (numberOfPendingItemsToLoadMore >= itemCount) {
             numberOfPendingItemsToLoadMore = 1
         }
@@ -144,7 +144,7 @@ abstract class PresenterAdapter<T : Any>() :
         !isLoadMorePosition(position) && !isHeaderPosition(position)
 
     override fun onBindViewHolder(holder: ViewHolder<T>, position: Int) {
-        //Log.d("PresenterAdapter", "onBindViewHolder -> pos:$position loadMoreConfig:$numberOfPendingItemsToLoadMore itemCount:$itemCount")
+        Log.d("PresenterAdapter", "onBindViewHolder -> pos:$position loadMoreConfig:$numberOfPendingItemsToLoadMore itemCount:$itemCount")
 
         when {
             isNormalPosition(position) -> {
@@ -160,14 +160,14 @@ abstract class PresenterAdapter<T : Any>() :
                     })
                 appendListeners(holder)
                 if (numberOfPendingItemsToLoadMore > 1 && shouldPaginate(position)) {
-                    //Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached NORMAL")
+                    Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached NORMAL")
                     notifyLoadMoreReached()
                 }
             }
             isHeaderPosition(position) -> holder.onBindHeader(data)
             isLoadMorePosition(position) -> {
                 if (numberOfPendingItemsToLoadMore == 1) {
-                    //Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached LOAD_MORE")
+                    Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached LOAD_MORE")
                     notifyLoadMoreReached()
                 }
             }
@@ -187,7 +187,7 @@ abstract class PresenterAdapter<T : Any>() :
     fun getPositionWithHeaders(position: Int) = position + headers.size
 
     private fun notifyLoadMoreReached() {
-        //Log.d("PresenterAdapter", "notifyLoadMoreReached -> $loadMoreListener $loadMoreInvoked")
+        Log.d("PresenterAdapter", "notifyLoadMoreReached -> $loadMoreListener $loadMoreInvoked")
         if (loadMoreListener != null && !loadMoreInvoked) {
             loadMoreInvoked = true
             loadMoreListener?.invoke()
