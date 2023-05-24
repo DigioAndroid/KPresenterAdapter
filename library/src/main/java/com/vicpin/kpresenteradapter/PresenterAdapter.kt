@@ -496,6 +496,7 @@ abstract class PresenterAdapter<T : Any>() :
 
     @JvmOverloads
     fun setCustomLoadMoreProperties(numberOfPendingItems: Int = 1, hideLoadMore:Boolean = false, loadMoreLayout:Int = R.layout.adapter_load_more){
+        this.loadMoreEnabled = true
         this.numberOfPendingItemsToLoadMore = numberOfPendingItems
         this.hideLoadMore = hideLoadMore
         this.loadMoreLayout = loadMoreLayout
