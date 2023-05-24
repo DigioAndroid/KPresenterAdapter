@@ -57,7 +57,8 @@ class ManualBindingFragment : Fragment(), ItemRecycledListener, ItemDeletedListe
             adapter = SimplePresenterAdapter(CountryView::class, R.layout.adapter_country)
         }
         adapter.notifyScrollStatus(recycler)
-        adapter.enableLoadMore(11, false, R.layout.test_adapter_load_more) { onLoadMore() }
+        adapter.setCustomLoadMoreProperties(5, false, R.layout.test_adapter_load_more)
+        adapter.enableLoadMore { onLoadMore() }
 
     }
 
@@ -77,7 +78,7 @@ class ManualBindingFragment : Fragment(), ItemRecycledListener, ItemDeletedListe
     private fun loadFirstData() {
         val data = repository.getItemsPage(0)
         adapter.setData(data)
-        adapter.addHeader(R.layout.adapter_header, HeaderView::class)
+        //adapter.addHeader(R.layout.adapter_header, HeaderView::class)
     }
 
     override fun onItemRecycled(presenterId: Int) {

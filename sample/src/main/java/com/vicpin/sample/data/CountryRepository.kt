@@ -10,7 +10,7 @@ import com.vicpin.sample.model.IRepository
  */
 class CountryRepository(context: Context?) : IRepository<Country> {
 
-    override val PAGE_SIZE = 10
+    override val PAGE_SIZE = 5
 
     override var items = context?.resources?.getStringArray(R.array.countries)?.map { Country(it, R.mipmap.ic_launcher) } ?: listOf()
 
