@@ -135,7 +135,7 @@ abstract class PresenterAdapter<T : Any>() :
         if (numberOfPendingItemsToLoadMore >= itemCount) {
             numberOfPendingItemsToLoadMore = 1
         }
-        return loadMoreEnabled && itemCount - numberOfPendingItemsToLoadMore == position
+        return itemCount - numberOfPendingItemsToLoadMore == position
     }
 
     private fun isHeaderPosition(position: Int) = position < headers.size
@@ -145,8 +145,7 @@ abstract class PresenterAdapter<T : Any>() :
 
     override fun onBindViewHolder(holder: ViewHolder<T>, position: Int) {
         Log.d("PresenterAdapter", "onBindViewHolder -> pos:$position loadMoreConfig:$numberOfPendingItemsToLoadMore itemCount:$itemCount")
-        val notifyCondition1 = if (hideLoadMore) true else numberOfPendingItemsToLoadMore > 1
-        val notifyCondition2 = if (hideLoadMore) true else numberOfPendingItemsToLoadMore == 1
+
         when {
             isNormalPosition(position) -> {
                 holder.onBind(
@@ -160,14 +159,14 @@ abstract class PresenterAdapter<T : Any>() :
                         mRecyclerView?.get()?.refreshVisibleViews()
                     })
                 appendListeners(holder)
-                if (notifyCondition1 && shouldPaginate(position)) {
+                if (numberOfPendingItemsToLoadMore > 1 && shouldPaginate(position)) {
                     Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached NORMAL")
                     notifyLoadMoreReached()
                 }
             }
             isHeaderPosition(position) -> holder.onBindHeader(data)
             isLoadMorePosition(position) -> {
-                if (notifyCondition2) {
+                if (numberOfPendingItemsToLoadMore == 1) {
                     Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached LOAD_MORE")
                     notifyLoadMoreReached()
                 }
@@ -495,11 +494,11 @@ abstract class PresenterAdapter<T : Any>() :
     }
 
     @JvmOverloads
-    fun enableCustomLoadMore(numberOfPendingItems: Int = 1, hideLoadMore:Boolean = false, loadMoreLayout:Int = R.layout.adapter_load_more, loadMoreListener: (() -> Unit)? ){
+    fun setupCustomLoadMore(numberOfPendingItems: Int = 1, hideLoadMore:Boolean = false, loadMoreLayout:Int = R.layout.adapter_load_more, loadMoreListener: (() -> Unit)? ){
         this.numberOfPendingItemsToLoadMore = numberOfPendingItems
         this.hideLoadMore = hideLoadMore
         this.loadMoreLayout = loadMoreLayout
-        enableLoadMore(loadMoreListener)
+        this.loadMoreListener = loadMoreListener
     }
 
     /**
@@ -508,9 +507,13 @@ abstract class PresenterAdapter<T : Any>() :
      */
 
     fun enableLoadMore( loadMoreListener: (() -> Unit)?) {
+        this.loadMoreListener = loadMoreListener
+        enableLoadMore()
+    }
+
+    fun enableLoadMore() {
         this.loadMoreEnabled = true
         this.loadMoreInvoked = false
-        this.loadMoreListener = loadMoreListener
         notifyItemInserted(itemCount)
     }
 
