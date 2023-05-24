@@ -57,7 +57,7 @@ class ManualBindingFragment : Fragment(), ItemRecycledListener, ItemDeletedListe
             adapter = SimplePresenterAdapter(CountryView::class, R.layout.adapter_country)
         }
         adapter.notifyScrollStatus(recycler)
-        adapter.enableLoadMore(3, false, R.layout.test_adapter_load_more) { onLoadMore() }
+        adapter.enableLoadMore(11, false, R.layout.test_adapter_load_more) { onLoadMore() }
 
     }
 
