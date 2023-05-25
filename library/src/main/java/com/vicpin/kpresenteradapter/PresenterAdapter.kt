@@ -133,7 +133,7 @@ abstract class PresenterAdapter<T : Any>() :
     private fun shouldPaginate(position: Int): Boolean {
         Log.d("PresenterAdapter", "shouldPaginate -> pos:$position loadMoreConfig:$numberOfPendingItemsToLoadMore itemCount:$itemCount")
         if (numberOfPendingItemsToLoadMore >= itemCount) {
-            numberOfPendingItemsToLoadMore = 1
+            numberOfPendingItemsToLoadMore = itemCount - 1
         }
         return itemCount - numberOfPendingItemsToLoadMore == position
     }
