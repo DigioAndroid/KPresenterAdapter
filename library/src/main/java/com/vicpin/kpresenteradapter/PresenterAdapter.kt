@@ -166,8 +166,10 @@ abstract class PresenterAdapter<T : Any>() :
             }
             isHeaderPosition(position) -> holder.onBindHeader(data)
             isLoadMorePosition(position) -> {
+                if (numberOfPendingItemsToLoadMore == 1) {
                     Log.d("PresenterAdapter", "onBindViewHolder -> notifyLoadMoreReached LOAD_MORE")
                     notifyLoadMoreReached()
+                }
             }
         }
     }
