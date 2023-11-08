@@ -3,12 +3,11 @@ package com.vicpin.kpresenteradapter
 import android.content.Context
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.extensions.LayoutContainer
-
+import com.vicpin.kpresenteradapter.`interface`.KLayoutContainer
 /**
  * Created by Victor on 01/11/2016.
  */
-abstract class ViewHolder<T: Any> : RecyclerView.ViewHolder, LayoutContainer {
+abstract class ViewHolder<T: Any> : RecyclerView.ViewHolder, KLayoutContainer {
 
     abstract val presenter: ViewHolderPresenter<T, *>?
     val context: Context
