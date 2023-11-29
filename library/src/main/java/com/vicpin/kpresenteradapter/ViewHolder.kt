@@ -86,4 +86,5 @@ abstract class ViewHolder<T: Any> : RecyclerView.ViewHolder, KLayoutContainer {
     fun setScrollState(state: Int) {
         presenter?.scrollState = state
     }
+    
 }
